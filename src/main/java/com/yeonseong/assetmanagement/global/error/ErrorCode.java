@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
+    DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "이미 등록된 값과 중복되었거나 연관된 데이터가 있어 처리할 수 없습니다."),
 
     ASSET_NOT_FOUND(HttpStatus.NOT_FOUND, "자산을 찾을 수 없습니다."),
     DUPLICATE_ASSET_TAG(HttpStatus.CONFLICT, "이미 등록된 자산번호입니다."),
