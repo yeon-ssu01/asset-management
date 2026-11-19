@@ -1,0 +1,31 @@
+services:
+  #services 아래는 띄울 프로그램 목록, 나중에 스프링 앱도 컨테이너로 만들면 여기에 나란히 추가
+  mysql:
+    image: mysql:8.4
+    #어떤 MySQL을 쓸지 Docker Hub에서 받아 오는데, 버전을 8.4로 못 박아서 언제 누가 실행해도 같은 버전 진행
+    container_name: asset-mysql
+    #Docker ps에 보일 이름
+    environment:
+      #environment는 MySQL이 처음 켜질 때 자동으로 해줄 초기 설정. root 비밀번호를 정하고,
+      # asset_db라는 DB를 만들고, asset_user 계정을 만들어 그 DB 권한을 줍니다 ${...} 부분은 .env 파일에서 값을
+      # 가져오라는 뜻, 비밀번호가 이 파일에 직접 안 적힘. 그래서 이 파일은 깃 허브에 올려도 되고, .env만 숨김
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: asset_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    #ports "3306:3306"은 컨테이너 안의 MySQL을 내 맥의 3306 포트로 연결하는 통로
+    #이게 있어야 DBeaver와 스프링 Localhost:3306으로 접속할 수 있습니다.
+    volumes:
+      - mysql-data:/var/lib/mysql
+    #volumes는 DB데이터를 컨테이너 밖에 따로 보관하는 설정입니다. 이게 없으면 컨테이너를 지울 때 데이터도 같이 날아갑니다.
+    #docker compose down 으로 껐다 켜도 데이터가 유지
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    #command는 한글이 꺠지지 않도록 문자셋을 utf8mb4로 지정하는 옵션
+
+volumes:
+  mysql-data:
+    # "내 프로젝트가 쓸 My SQL을 어떻게 띄울지"를 설계도 파일로 적은 작업" docker compose up -를 치면
+    # Docker가 이 파일을 읽고 그대로 MySQL을 만들어 줌
