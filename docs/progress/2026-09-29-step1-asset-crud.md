@@ -81,7 +81,7 @@ docker compose ps
 | 4번 | 필수값 누락 | 400 + `errors` 배열에 필드별 사유 |
 | 8번 | 전체 목록 | 200 + content 배열, totalElements |
 | 15번 | REPAIR 상태 변경 | 200 + status: "REPAIR" |
-| 17번 | IN_USE 직접 변경 | 409 ASSET_STATUS_CHANGE_NOT_ALLOWED |
+| 17번 | IN_USE 직접 변경 | 400 ASSET_STATUS_CHANGE_NOT_ALLOWED |
 | 19번 | 삭제 | 먼저 16번으로 IN_STOCK 복구 후 2번 자산 삭제 → 204 |
 
 ### 3. DBeaver에서 볼 것

@@ -15,7 +15,8 @@ public enum ErrorCode {
     DUPLICATE_ASSET_TAG(HttpStatus.CONFLICT, "이미 등록된 자산번호입니다."),
     DUPLICATE_SERIAL_NO(HttpStatus.CONFLICT, "이미 등록된 시리얼 번호입니다."),
     ASSET_HAS_HISTORY(HttpStatus.CONFLICT, "이력이 있는 자산은 삭제할 수 없습니다. 폐기 처리(DISPOSED)를 사용하세요."),
-    ASSET_STATUS_CHANGE_NOT_ALLOWED(HttpStatus.CONFLICT, "해당 상태로는 직접 변경할 수 없습니다. IN_USE는 지급을 통해서만 설정됩니다.");
+    // IN_USE는 지급으로만 바뀌므로 현재 상태와 무관하게 항상 잘못된 요청 → 400
+    ASSET_STATUS_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "해당 상태로는 직접 변경할 수 없습니다. IN_USE는 지급을 통해서만 설정됩니다.");
 
     private final HttpStatus status;
     private final String message;

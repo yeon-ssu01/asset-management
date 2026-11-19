@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -92,7 +94,7 @@ class AssetServiceTest {
     }
 
     @Test
-    @DisplayName("IN_USE로 상태 직접 변경 시 ASSET_STATUS_CHANGE_NOT_ALLOWED 예외")
+    @DisplayName("IN_USE로 상태 직접 변경 시 400 ASSET_STATUS_CHANGE_NOT_ALLOWED 예외")
     void changeStatus_inUseNotAllowed() {
         AssetStatusChangeRequest request = new AssetStatusChangeRequest(AssetStatus.IN_USE);
 
@@ -100,6 +102,8 @@ class AssetServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting(e -> ((BusinessException) e).getErrorCode())
                 .isEqualTo(ErrorCode.ASSET_STATUS_CHANGE_NOT_ALLOWED);
+        assertThat(ErrorCode.ASSET_STATUS_CHANGE_NOT_ALLOWED.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(assetRepository, never()).findById(any());
     }
 
     @Test
