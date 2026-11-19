@@ -114,3 +114,40 @@ docker compose ps
 4. **`@Transactional(readOnly = true)`를 클래스에 달고 쓰기 메서드에만 `@Transactional`을 단 이유는?** 조회 메서드에서 읽기 전용 트랜잭션을 쓰면 DB 입장에서 무엇이 달라지나?
 
 5. **`delete` 메서드가 지금은 IN_STOCK이 아니면 막는데, 2단계에서 뭘 추가해야 하나?** (힌트: assignment 테이블에서 해당 자산의 이력 존재 여부 확인)
+
+---
+
+## 보완 작업
+
+### 2026-11-19 — DB 제약 위반 응답 수정 (`17ca33f`)
+
+**문제:** `DataIntegrityViolationException`이 나면 원인과 관계없이 항상 `DUPLICATE_ASSET_TAG`로 응답했다. 시리얼이 중복돼도 "이미 등록된 자산번호입니다."가 나갔다.
+
+**바꾼 파일**
+
+| 파일 | 변경 |
+|---|---|
+| `global/error/ErrorCode.java` | `DATA_INTEGRITY_VIOLATION`(409) 추가 |
+| `global/error/GlobalExceptionHandler.java` | DB 제약 위반을 위 코드로 응답하고, 실제 원인은 `log.warn`으로 콘솔에 남김 |
+| `global/error/GlobalExceptionHandlerTest.java` (신규) | 시리얼 중복 예외를 넣어도 409 `DATA_INTEGRITY_VIOLATION`인지 확인 |
+
+**처리 흐름** (동시 요청 두 건이 서비스 중복 체크를 모두 통과한 경우)
+
+```
+AssetService.create()
+  → AssetRepository.save()               # INSERT, DB UNIQUE 제약 위반
+  → DataIntegrityViolationException
+  → GlobalExceptionHandler.handleDataIntegrity()
+      → log.warn("DB 제약 위반: Duplicate entry 'SN-001' for key ...")
+← 409 {"code":"DATA_INTEGRITY_VIOLATION", ...}
+```
+
+**왜 하나의 일반 코드로 묶었나**
+- 이 예외는 서비스 중복 체크를 동시 요청이 통과했을 때만 생기는 최후 방어선이라 드물다.
+- 2단계부터는 FK 위반(연관 데이터가 남아 있는 경우)도 같은 예외로 들어오므로 특정 원인으로 단정하지 않는다.
+- 원인은 로그에서 확인한다. 응답에 DB 내부 정보(테이블·인덱스 이름)가 노출되지 않는 효과도 있다.
+- 검토한 대안: UNIQUE 제약에 이름을 붙이고 제약 이름으로 자산번호·시리얼을 구분하는 방식. 기존 DB에 자동 생성된 인덱스를 정리해야 해서 보류했다.
+
+**DB 변경:** 없음
+
+**확인 방법:** `./gradlew test` 통과(7개). 동시 요청은 재현이 어려우므로 단위 테스트로 확인한다. 실제로 발생하면 콘솔에서 `DB 제약 위반:` 로그를 찾는다.
